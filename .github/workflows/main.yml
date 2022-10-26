@@ -1,4 +1,3 @@
-# flutter github action workflow build and test flutter app on push and pull request to master branch and upload apk to github release on tag push
 name: MelonedApp
 
 on:
