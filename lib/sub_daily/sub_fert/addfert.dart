@@ -1,8 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_session_manager/flutter_session_manager.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:http/http.dart' as http;
 import '/reuse/bottombar.dart';
 import '/reuse/container.dart';
 import '/reuse/hamburger.dart';
@@ -10,8 +11,7 @@ import '/sub_daily/sub_fert/fertdropdown.dart';
 import '../../reuse/sizedbox.dart';
 import '../../style/colortheme.dart';
 import '../../style/textstyle.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:http/http.dart' as http;
+
 
 class AddFert extends StatefulWidget {
   const AddFert({Key? key}) : super(key: key);
@@ -33,12 +33,22 @@ class _AddFertState extends State<AddFert> {
 
   getSession() async {
     dynamic id = await SessionManager().get("period_ID");
-    dynamic fert_id = await SessionManager().get("fert_ID");
-    print(id.runtimeType);
     setState(() {
       period_ID = id.toString();
-      selectValfertID = fert_id.toString();
     });
+  }
+
+  getSessionFert() async {
+    dynamic fert_id = await SessionManager().get("fert_ID");
+    setState(() {
+      selectValfertID = fert_id.toString();
+      print("Get Session FERT FERTID ON ADDFERT " + selectValfertID);
+    });
+  }
+
+  insertFert() async {
+    await getSessionFert();
+    await addfert(selectValfertID, period_ID);
   }
 
   Future addfert(String fert_ID, String period_ID) async {
@@ -46,7 +56,7 @@ class _AddFertState extends State<AddFert> {
       var url =
           "https://meloned.relaxlikes.com/api/dailycare/insert_fertilizing.php";
       var response = await http.post(Uri.parse(url), body: {
-        'fert_ID': selectValfertID,
+        'fert_ID': fert_ID,
         'ferting_amount': fertamountController.text,
         'period_ID': period_ID,
       });
@@ -61,7 +71,7 @@ class _AddFertState extends State<AddFert> {
             fontSize: 16.0);
         setState(() {
           fertamountController.clear();
-          Navigator.pop(context);
+          Navigator.pop(context, true);
         });
       } else if (data == "Failed") {
         Fluttertoast.showToast(
@@ -101,6 +111,7 @@ class _AddFertState extends State<AddFert> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              
               Text(
                 'ชื่อปุ๋ย',
                 style: TextCustom.textboxlabel(),
@@ -128,7 +139,7 @@ class _AddFertState extends State<AddFert> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        addfert(selectValfertID, period_ID);
+                        insertFert();
                         setState(() {});
                       },
                       child: Text('ยืนยัน', style: TextCustom.buttontext()),
@@ -145,10 +156,8 @@ class _AddFertState extends State<AddFert> {
                     child: ElevatedButton(
                       onPressed: () {
                         //back and refresh previous page
-                        Navigator.pop(context);
-                        setState(() {
-                          
-                        });
+                        Navigator.pop(context, true);
+                        setState(() {});
                       },
                       child: Text(
                         'ยกเลิก',

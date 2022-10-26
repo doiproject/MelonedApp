@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:newmelonedv2/style/textstyle.dart';
 import '../menu.dart';
 import '../period.dart';
 import '../daily.dart';
@@ -12,15 +13,20 @@ import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
 
 class NewPeriod extends StatefulWidget {
- NewPeriod({Key? key}) : super(key: key);
+  NewPeriod({Key? key}) : super(key: key);
 
   @override
   State<NewPeriod> createState() => _NewPeriodState();
 }
 
 class _NewPeriodState extends State<NewPeriod> {
+  //Variable
   List greenhouse = [];
   String? selectval;
+
+  //Controller
+  final periodnameController = TextEditingController();
+  final plantedmelonController = TextEditingController();
 
   //GET REGISTERED GREENHOUSE
   Future RegisterPeriod() async {
@@ -28,12 +34,14 @@ class _NewPeriodState extends State<NewPeriod> {
 
     var response = await http.post(Uri.parse(url), body: {
       'greenhouse_ID': selectval,
+      'planted_melon': plantedmelonController.text,
+      'period_name': periodnameController.text,
     });
 
     var jsonData = json.decode(response.body);
     print(jsonData);
 
-    if (jsonData == "Fail") {
+    if (jsonData == "Failed") {
       Fluttertoast.showToast(
         msg: "สร้างรอบการปลูกล้มเหลว",
         toastLength: Toast.LENGTH_SHORT,
@@ -61,13 +69,8 @@ class _NewPeriodState extends State<NewPeriod> {
   Future getGreenHouse() async {
     var url =
         "https://meloned.relaxlikes.com/api/greenhouse/viewgreenhouse.php";
-
     var response = await http.get(Uri.parse(url));
-    // greenhouse = json.decode(response.body);
-    // return json.decode(response.body);
-
     var jsonData = json.decode(response.body);
-
     setState(() {
       greenhouse = jsonData;
     });
@@ -138,28 +141,16 @@ class _NewPeriodState extends State<NewPeriod> {
                   height: 10,
                 ),
                 Container(
-                  // color: Color.fromRGBO(251, 249, 218, 1),
                   height: 50,
-
-                  //////////////////////////////////////////////////////////////////
-                  //////////////////////////////////////////////////////////////////
-                  /*____________________Dropdown เลือกโรงเรือน_______________________*/
-                  //////////////////////////////////////////////////////////////////
-                  //////////////////////////////////////////////////////////////////
-                  ///
-
                   child: Padding(
-                    padding: EdgeInsets.only(left: 10),
+                    padding: EdgeInsets.only(left: 0),
                     child: DropdownButtonFormField2(
                       buttonPadding: EdgeInsets.only(left: 20, right: 10),
                       buttonHeight: 50,
                       buttonWidth: double.infinity,
-                      hint: Text(
-                        'กรุณาเลือกโรงเรือน',
-                        style: GoogleFonts.kanit(
-                         color: ColorCustom.mediumgreencolor()
-                        )
-                      ),
+                      hint: Text('กรุณาเลือกโรงเรือน',
+                          style: GoogleFonts.kanit(
+                              color: ColorCustom.mediumgreencolor())),
                       isExpanded: true,
                       items: greenhouse.map((item) {
                         return new DropdownMenuItem(
@@ -180,28 +171,71 @@ class _NewPeriodState extends State<NewPeriod> {
                   ),
                 ),
                 SizedBox(
+                  height: 12,
+                ),
+                Text(
+                  'ชื่อรอบการปลูก',
+                  style: GoogleFonts.kanit(
+                      fontSize: 18, color: Color.fromRGBO(116, 116, 39, 1)),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                TextField(
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.only(left: 20, right: 20),
+                    hintText: 'กรุณากรอกชื่อรอบการปลูก',
+                    hintStyle: GoogleFonts.kanit(
+                        color: ColorCustom.mediumgreencolor()),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  controller: periodnameController,
+                  style: TextCustom.normal_mdg16(),
+                ),
+                SizedBox(
+                  height: 12,
+                ),
+                Text(
+                  'จำนวนเมลอน',
+                  style: GoogleFonts.kanit(
+                      fontSize: 18, color: Color.fromRGBO(116, 116, 39, 1)),
+                ),
+                TextField(
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.only(left: 20, right: 20),
+                    hintText: 'กรุณากรอกจำนวนเมลอน',
+                    hintStyle: GoogleFonts.kanit(
+                        color: ColorCustom.mediumgreencolor()),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  controller: plantedmelonController,
+                  style: TextCustom.normal_mdg16(),
+                ),
+                SizedBox(
                   height: 10,
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
-                      child: TextButton(
-                        ////////////////////////////////////////////////
-                        //ปุ่มบันทึก
-                        ////////////////////////////////////////////////
+                      child: ElevatedButton(
                         onPressed: () {
                           RegisterPeriod();
+                          setState(() {
+                            Navigator.pop(context, true);
+                          });
                         },
-                        child: Text(
-                          'บันทึก',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
+                        child: Text('เพิ่มรอบการปลูก',
+                            style: TextCustom.buttontext()),
+                        style: ElevatedButton.styleFrom(
+                          primary: ColorCustom.mediumgreencolor(),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Color.fromRGBO(159, 159, 54, 1),
                         ),
                       ),
                     ),
@@ -209,26 +243,21 @@ class _NewPeriodState extends State<NewPeriod> {
                       width: 15,
                     ),
                     Expanded(
-                      child: TextButton(
-                        ////////////////////////////////////////////
-                        //ปุ่มยกเลิก
-                        /////////////////////////////////////////////
+                      child: ElevatedButton(
                         onPressed: () {
-                          // Navigator.pop(context);
-                          setState(() {
-                            Navigator.pop(context);
-                          });
+                          //back and refresh previous page
+                          Navigator.pop(context, true);
                           setState(() {});
                         },
                         child: Text(
                           'ยกเลิก',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
+                          style: TextCustom.buttontext(),
                         ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Color.fromRGBO(172, 112, 79, 1),
+                        style: ElevatedButton.styleFrom(
+                          primary: Colors.red[300],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                       ),
                     ),
@@ -255,7 +284,7 @@ class _NewPeriodState extends State<NewPeriod> {
 }
 
 class MyBottomBar extends StatelessWidget {
- MyBottomBar({
+  MyBottomBar({
     Key? key,
   }) : super(key: key);
 
@@ -359,7 +388,7 @@ class MyBottomBar extends StatelessWidget {
 }
 
 class Hamburger1 extends StatelessWidget {
- Hamburger1({
+  Hamburger1({
     Key? key,
     required this.sidemenu,
   }) : super(key: key);

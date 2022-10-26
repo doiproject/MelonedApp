@@ -4,23 +4,25 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:lottie/lottie.dart';
 import 'package:newmelonedv2/sub_daily/sub_humid/addhumid.dart';
 import 'package:http/http.dart' as http;
+import 'package:newmelonedv2/sub_daily/sub_temp/addtemp.dart';
+import 'package:newmelonedv2/sub_daily/sub_temp/edittemp.dart';
 import 'dart:convert';
 import '../style/colortheme.dart';
 import '../style/textstyle.dart';
 import 'sub_humid/edithumid.dart';
 
-class Humid extends StatefulWidget {
-  const Humid({Key? key}) : super(key: key);
+class Temp extends StatefulWidget {
+  const Temp({Key? key}) : super(key: key);
   @override
-  State<Humid> createState() => _HumidState();
+  State<Temp> createState() => _TempState();
 }
 
-class _HumidState extends State<Humid> {
+class _TempState extends State<Temp> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
   //List
-  List<Humidity> humidity = [];
+  List<Temperature> temperature = [];
 
   //Session Manager
   dynamic period_ID;
@@ -34,16 +36,14 @@ class _HumidState extends State<Humid> {
 
   getSession() async {
     dynamic id = await SessionManager().get("period_ID");
-    // print(id.runtimeType);
     setState(() {
       period_ID = id.toString();
     });
   }
 
-  Future detailHumidity(String period_ID) async {
-    // print("Period ID on Water.dart : $period_ID");
+  Future detailTemp(String period_ID) async {
     try {
-      var url = "https://meloned.relaxlikes.com/api/dailycare/view_humid.php";
+      var url = "https://meloned.relaxlikes.com/api/dailycare/view_temp.php";
       var response = await http.post(Uri.parse(url), body: {
         'period_ID': period_ID,
       });
@@ -53,23 +53,22 @@ class _HumidState extends State<Humid> {
       // print(data);
       // วนลูปข้อมูลที่ได้จาก API แล้วเก็บไว้ใน Array
       for (var i = 0; i < data.length; i++) {
-        Humidity humidity = Humidity((i + 1), data[i]['humid_ID'],
-            data[i]['humid_time'], data[i]['RH'], data[i]['period_ID']);
-        this.humidity.add(humidity);
+        Temperature temperature = Temperature((i + 1), data[i]['temp_ID'],
+            data[i]['temp_time'], data[i]['celsius'], data[i]['period_ID']);
+        this.temperature.add(temperature);
       }
       // ส่งข้อมูลกลับไปแสดงใน ListView
-      return humidity;
+      return temperature;
     } catch (e) {
       print(e);
     }
-    // print(watering);
   }
 
   Future<void> _refresh() async {
-    final fetchhumiddata = await detailHumidity(period_ID);
+    final fetchtempdata = await detailTemp(period_ID);
     setState(() {
-      humidity.clear();
-      humidity = fetchhumiddata;
+      temperature.clear();
+      temperature = fetchtempdata;
     });
   }
 
@@ -88,7 +87,7 @@ class _HumidState extends State<Humid> {
                         context,
                         MaterialPageRoute(
                             builder: (context) =>
-                                AddHumid(periodID: period_ID)));
+                                AddTemp(periodID: period_ID)));
                   },
                   icon: Icon(
                     Icons.add_circle,
@@ -97,7 +96,7 @@ class _HumidState extends State<Humid> {
             ],
           ),
           FutureBuilder(
-            future: detailHumidity(period_ID),
+            future: detailTemp(period_ID),
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               if (snapshot.data == null) {
                 return Container(
@@ -126,17 +125,16 @@ class _HumidState extends State<Humid> {
                   child: Column(
                     children: [
                       Expanded(
-                        flex: 1,
-                        child: humidity.isNotEmpty
+                        child: temperature.isNotEmpty
                             ? RefreshIndicator(
                                 key: _refreshIndicatorKey,
                                 onRefresh: _refresh,
                                 child: ListView.builder(
-                                  itemCount: humidity.length,
+                                  itemCount: temperature.length,
                                   itemBuilder:
                                       (BuildContext context, int index) {
-                                    return HumidCard(
-                                      humidity: humidity[index],
+                                    return TempCard(
+                                      temperature: temperature[index],
                                     );
                                   },
                                 ),
@@ -153,7 +151,7 @@ class _HumidState extends State<Humid> {
                                         height: 250,
                                       ),
                                       Text(
-                                        'ไม่มีข้อมูลเกียวกับความชื้น',
+                                        'ไม่มีข้อมูลเกี่ยวกับอุณหภูมิ',
                                         style: TextCustom.normal_mdg20(),
                                       ),
                                     ],
@@ -173,26 +171,26 @@ class _HumidState extends State<Humid> {
   }
 }
 
-class Humidity {
+class Temperature {
   final int count;
   final String time;
-  final String humidamount;
+  final String temperatureamount;
   final String period_ID;
-  final String humid_ID;
+  final String temp_ID;
 
-  Humidity(
-      this.count, this.humid_ID, this.time, this.humidamount, this.period_ID);
+  Temperature(this.count, this.temp_ID, this.time, this.temperatureamount,
+      this.period_ID);
 }
 
-class HumidCard extends StatefulWidget {
-  Humidity humidity;
-  HumidCard({Key? key, required this.humidity}) : super(key: key);
+class TempCard extends StatefulWidget {
+  Temperature temperature;
+  TempCard({Key? key, required this.temperature}) : super(key: key);
 
   @override
-  State<HumidCard> createState() => _HumidCardState();
+  State<TempCard> createState() => _TempCardState();
 }
 
-class _HumidCardState extends State<HumidCard> {
+class _TempCardState extends State<TempCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -210,13 +208,13 @@ class _HumidCardState extends State<HumidCard> {
               padding: EdgeInsets.all(20),
             ),
             onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => EditHumid(
-                            humidID: widget.humidity.humid_ID,
-                            humidamount: widget.humidity.humidamount,
-                          )));
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //         builder: (context) => EditTemp(
+              //               tempID: widget.temperature.temp_ID,
+              //               tempamount: widget.temperature.temperatureamount,
+              //             )));
             },
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,17 +230,18 @@ class _HumidCardState extends State<HumidCard> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('ความชื้น', style: TextCustom.normal_dg16()),
+                              Text('อุณหภูมิ', style: TextCustom.normal_dg16()),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('${widget.humidity.humidamount}',
+                                  Text(
+                                      '${widget.temperature.temperatureamount}',
                                       style: TextCustom.normal_mdg16()),
-                                  SizedBox(width: 5),
-                                  Text('%RH', style: TextCustom.normal_dg16()),
+                                  SizedBox(width: 2),
+                                  Text('°C', style: TextCustom.normal_dg16()),
                                 ],
                               ),
-                              Text('${widget.humidity.time}',
+                              Text('${widget.temperature.time}',
                                   style: TextCustom.normal_dg16()),
                             ],
                           ),
@@ -256,10 +255,10 @@ class _HumidCardState extends State<HumidCard> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => EditHumid(
-                                            humidID: widget.humidity.humid_ID,
-                                            humidamount:
-                                                widget.humidity.humidamount,
+                                      builder: (context) => EditTemp(
+                                            tempID: widget.temperature.temp_ID,
+                                            tempamount: widget
+                                                .temperature.temperatureamount,
                                           )));
                             },
                             icon: Icon(

@@ -2,18 +2,21 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:lottie/lottie.dart';
 import 'package:newmelonedv2/reuse/container.dart';
 import 'package:newmelonedv2/reuse/hamburger.dart';
 import 'package:intl/intl.dart';
 import 'package:newmelonedv2/reuse/sizedbox.dart';
 import 'package:newmelonedv2/style/textstyle.dart';
+import 'package:newmelonedv2/sub_summary/showreport/showdaily.dart';
+import 'package:newmelonedv2/model/dailyfert.dart';
+import 'package:flutter_session_manager/flutter_session_manager.dart';
 
 import '../reuse/bottombar.dart';
+import '../reuse/waitingchart.dart';
 import '../style/colortheme.dart';
 
 class SummaryDaily extends StatefulWidget {
-  
-
   final _formKey = GlobalKey<FormState>();
 
   // const SummaryDaily({Key? key}) : super(key: key);
@@ -23,16 +26,22 @@ class SummaryDaily extends StatefulWidget {
 }
 
 class _SummaryDailyState extends State<SummaryDaily> {
-
   //Variable
   List greenhouse = [];
   String? selectedValue;
+  var dateChangeFormat;
+
+  //Function
+  createSession() async {
+    await SessionManager().set('greenhouseid', selectedValue);
+    await SessionManager().set("seletedate", dateChangeFormat);
+  }
 
   //Controller
   TextEditingController dateController = TextEditingController();
 
   //GET DATA FROM API
-    //GET GREENHOUSE IN SUMMARY DAILY PAGE
+  //GET GREENHOUSE IN SUMMARY DAILY PAGE
   Future getGreenHouse() async {
     var url = "https://meloned.relaxlikes.com/api/summary/viewgreenhouse.php";
     var response = await http.get(Uri.parse(url));
@@ -42,6 +51,61 @@ class _SummaryDailyState extends State<SummaryDaily> {
       greenhouse = data;
     });
     return greenhouse;
+  }
+
+  //GET WATERING IN SUMMARY DAILY PAGE when click dropdown button1 (greenhouse)
+  Future getWatering() async {
+    try {
+      var url =
+          "https://meloned.relaxlikes.com/api/summary/daily/get_watering.php";
+      var response = await http.post(Uri.parse(url), body: {
+        "greenhouse_ID": selectedValue,
+        "selected_date": dateChangeFormat,
+      });
+
+      var data = json.decode(response.body);
+
+      return data;
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future getFertilizer() async {
+    try {
+      var url =
+          "https://meloned.relaxlikes.com/api/summary/daily/get_fertilizing.php";
+      var response = await http.post(Uri.parse(url), body: {
+        "greenhouse_ID": selectedValue,
+        "selected_date": dateChangeFormat,
+      });
+      var data = json.decode(response.body);
+
+      return data;
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  // void result1() async {
+  //   var data = await getWatering();
+  //   var data2 = await getFert();
+
+  // }
+
+  void result() async {
+    //show dialog
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return WaitingDialog();
+        });
+    // var waterdata = await getWatering();
+    // var fertdata = await getFertilizer();
+
+    Navigator.pop(context);
+    Navigator.push(
+        context, MaterialPageRoute(builder: (context) => ShowDaily()));
   }
 
   @override
@@ -80,7 +144,6 @@ class _SummaryDailyState extends State<SummaryDaily> {
               hint: Text(
                 'เลือกโรงเรือน',
                 style: TextCustom.normal_mdg16(),
-                                
               ),
               icon: Icon(
                 Icons.arrow_drop_down,
@@ -103,7 +166,7 @@ class _SummaryDailyState extends State<SummaryDaily> {
               }).toList(),
               validator: (value) {
                 if (value == null) {
-                  return 'เลือกสูตรปุ๋ย';
+                  return 'เลือกโรงเรือน';
                 }
               },
               onChanged: (value) {
@@ -112,13 +175,10 @@ class _SummaryDailyState extends State<SummaryDaily> {
                   print(selectedValue);
                 });
               },
-              // onSaved: (value) {
-              //   widget.selectedValue = value.toString();
-              // },
             ),
             sizedBox.Boxh10(),
             Text(
-              'วันที่ต้องการสรุป',
+              'วันที่ต้องการดูสรุป',
               style: TextCustom.textboxlabel(),
             ),
             sizedBox.Boxh5(),
@@ -150,7 +210,17 @@ class _SummaryDailyState extends State<SummaryDaily> {
             ),
             sizedBox.Boxh10(),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                //change format date
+                var date = dateController.text;
+                var dateSplit = date.split('-');
+                dateChangeFormat =
+                    dateSplit[2] + '-' + dateSplit[1] + '-' + dateSplit[0];
+
+                //Action
+                createSession();
+                Navigator.pushNamed(context, '/dailysummary');
+              },
               child: Text('ดูรายงาน', style: TextCustom.buttontext2()),
               style: ElevatedButton.styleFrom(
                 elevation: 2,

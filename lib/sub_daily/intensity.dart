@@ -2,25 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_session_manager/flutter_session_manager.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:lottie/lottie.dart';
-import 'package:newmelonedv2/sub_daily/sub_humid/addhumid.dart';
 import 'package:http/http.dart' as http;
+import 'package:newmelonedv2/sub_daily/sub_intensity/addintensity.dart';
 import 'dart:convert';
 import '../style/colortheme.dart';
 import '../style/textstyle.dart';
-import 'sub_humid/edithumid.dart';
+import 'sub_intensity/editintensity.dart';
 
-class Humid extends StatefulWidget {
-  const Humid({Key? key}) : super(key: key);
+class Intense extends StatefulWidget {
+  const Intense({Key? key}) : super(key: key);
   @override
-  State<Humid> createState() => _HumidState();
+  State<Intense> createState() => _IntenseState();
 }
 
-class _HumidState extends State<Humid> {
+class _IntenseState extends State<Intense> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
   //List
-  List<Humidity> humidity = [];
+  List<Intensity> intensity = [];
 
   //Session Manager
   dynamic period_ID;
@@ -40,25 +40,28 @@ class _HumidState extends State<Humid> {
     });
   }
 
-  Future detailHumidity(String period_ID) async {
-    // print("Period ID on Water.dart : $period_ID");
+  Future detailIntensity(String period_ID) async {
+
     try {
-      var url = "https://meloned.relaxlikes.com/api/dailycare/view_humid.php";
-      var response = await http.post(Uri.parse(url), body: {
-        'period_ID': period_ID,
-      });
-      // return json.decode(response.body);
-      //แปลงข้อมูลให้เป็น JSON
-      var data = json.decode(response.body);
-      // print(data);
-      // วนลูปข้อมูลที่ได้จาก API แล้วเก็บไว้ใน Array
-      for (var i = 0; i < data.length; i++) {
-        Humidity humidity = Humidity((i + 1), data[i]['humid_ID'],
-            data[i]['humid_time'], data[i]['RH'], data[i]['period_ID']);
-        this.humidity.add(humidity);
-      }
-      // ส่งข้อมูลกลับไปแสดงใน ListView
-      return humidity;
+        var url =
+            "https://meloned.relaxlikes.com/api/dailycare/view_intense.php";
+        var response = await http.post(Uri.parse(url), body: {
+          'period_ID': period_ID,
+        });
+        // return json.decode(response.body);
+        //แปลงข้อมูลให้เป็น JSON
+        var data = json.decode(response.body);
+        // print(data);
+        // วนลูปข้อมูลที่ได้จาก API แล้วเก็บไว้ใน Array
+        for (var i = 0; i < data.length; i++) {
+          Intensity intensity = Intensity((i + 1), data[i]['intense_ID'],
+              data[i]['intense_time'], data[i]['lux'], data[i]['period_ID']);
+          this.intensity.add(intensity);
+        }
+        // ส่งข้อมูลกลับไปแสดงใน ListView
+        return intensity;
+
+
     } catch (e) {
       print(e);
     }
@@ -66,10 +69,10 @@ class _HumidState extends State<Humid> {
   }
 
   Future<void> _refresh() async {
-    final fetchhumiddata = await detailHumidity(period_ID);
+    final fetchintensedata = await detailIntensity(period_ID);
     setState(() {
-      humidity.clear();
-      humidity = fetchhumiddata;
+      intensity.clear();
+      intensity = fetchintensedata;
     });
   }
 
@@ -88,7 +91,7 @@ class _HumidState extends State<Humid> {
                         context,
                         MaterialPageRoute(
                             builder: (context) =>
-                                AddHumid(periodID: period_ID)));
+                                AddIntense(periodID: period_ID)));
                   },
                   icon: Icon(
                     Icons.add_circle,
@@ -97,7 +100,7 @@ class _HumidState extends State<Humid> {
             ],
           ),
           FutureBuilder(
-            future: detailHumidity(period_ID),
+            future: detailIntensity(period_ID),
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               if (snapshot.data == null) {
                 return Container(
@@ -126,17 +129,16 @@ class _HumidState extends State<Humid> {
                   child: Column(
                     children: [
                       Expanded(
-                        flex: 1,
-                        child: humidity.isNotEmpty
+                        child: intensity.isNotEmpty
                             ? RefreshIndicator(
                                 key: _refreshIndicatorKey,
                                 onRefresh: _refresh,
                                 child: ListView.builder(
-                                  itemCount: humidity.length,
+                                  itemCount: intensity.length,
                                   itemBuilder:
                                       (BuildContext context, int index) {
-                                    return HumidCard(
-                                      humidity: humidity[index],
+                                    return IntensityCard(
+                                      intensity: intensity[index],
                                     );
                                   },
                                 ),
@@ -153,7 +155,7 @@ class _HumidState extends State<Humid> {
                                         height: 250,
                                       ),
                                       Text(
-                                        'ไม่มีข้อมูลเกียวกับความชื้น',
+                                        'ไม่มีข้อมูลเกี่ยวกับความเข้มแสง',
                                         style: TextCustom.normal_mdg20(),
                                       ),
                                     ],
@@ -173,26 +175,26 @@ class _HumidState extends State<Humid> {
   }
 }
 
-class Humidity {
+class Intensity {
   final int count;
   final String time;
-  final String humidamount;
+  final String intenseamount;
   final String period_ID;
-  final String humid_ID;
+  final String intense_ID;
 
-  Humidity(
-      this.count, this.humid_ID, this.time, this.humidamount, this.period_ID);
+  Intensity(this.count, this.intense_ID, this.time, this.intenseamount,
+      this.period_ID);
 }
 
-class HumidCard extends StatefulWidget {
-  Humidity humidity;
-  HumidCard({Key? key, required this.humidity}) : super(key: key);
+class IntensityCard extends StatefulWidget {
+  Intensity intensity;
+  IntensityCard({Key? key, required this.intensity}) : super(key: key);
 
   @override
-  State<HumidCard> createState() => _HumidCardState();
+  State<IntensityCard> createState() => _IntensityCardState();
 }
 
-class _HumidCardState extends State<HumidCard> {
+class _IntensityCardState extends State<IntensityCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -210,13 +212,13 @@ class _HumidCardState extends State<HumidCard> {
               padding: EdgeInsets.all(20),
             ),
             onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => EditHumid(
-                            humidID: widget.humidity.humid_ID,
-                            humidamount: widget.humidity.humidamount,
-                          )));
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //         builder: (context) => EditIntens(
+              //               intensID: widget.intensity.intense_ID,
+              //               intensamount: widget.intensity.intenseamount,
+              //             )));
             },
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,17 +234,17 @@ class _HumidCardState extends State<HumidCard> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('ความชื้น', style: TextCustom.normal_dg16()),
+                              Text('ความเข็มแสง', style: TextCustom.normal_dg16()),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('${widget.humidity.humidamount}',
+                                  Text('${widget.intensity.intenseamount}',
                                       style: TextCustom.normal_mdg16()),
                                   SizedBox(width: 5),
-                                  Text('%RH', style: TextCustom.normal_dg16()),
+                                  Text('Lux', style: TextCustom.normal_dg16()),
                                 ],
                               ),
-                              Text('${widget.humidity.time}',
+                              Text('${widget.intensity.time}',
                                   style: TextCustom.normal_dg16()),
                             ],
                           ),
@@ -256,10 +258,11 @@ class _HumidCardState extends State<HumidCard> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => EditHumid(
-                                            humidID: widget.humidity.humid_ID,
-                                            humidamount:
-                                                widget.humidity.humidamount,
+                                      builder: (context) => EditIntens(
+                                            intenseID:
+                                                widget.intensity.intense_ID,
+                                            intensamount:
+                                                widget.intensity.intenseamount,
                                           )));
                             },
                             icon: Icon(

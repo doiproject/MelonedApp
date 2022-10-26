@@ -13,126 +13,72 @@ import '../../style/colortheme.dart';
 import '../../style/textstyle.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 
-class EditFert extends StatefulWidget {
-  final String ferting_ID;
-  final String fert_name;
-  final String ferting_amount;
-  final String fert_ID;
+class AddWater extends StatefulWidget {
+  final String periodID;
 
-  const EditFert({
+  AddWater({
     Key? key,
-    required this.ferting_ID,
-    required this.fert_name,
-    required this.ferting_amount,
-    required this.fert_ID,
+    required this.periodID,
   }) : super(key: key);
 
   @override
-  State<EditFert> createState() => _EditFertState();
+  State<AddWater> createState() => _AddWaterState();
 }
 
-class _EditFertState extends State<EditFert> {
-  bool editMode = false;
+class _AddWaterState extends State<AddWater> {
+  //variable
+  final wateramountController = TextEditingController();
 
-  final fertnameController = TextEditingController();
-  final fertamountController = TextEditingController();
+  Future addWater(String period_ID) async {
+    var url =
+        "https://meloned.relaxlikes.com/api/dailycare/insert_watering.php";
+    var response = await http.post(Uri.parse(url), body: {
+      'period_ID': period_ID,
+      'ml': wateramountController.text,
+    });
 
-  Future editFert() async {
-    try {
-      var url = Uri.parse(
-          'https://meloned.relaxlikes.com/api/dailycare/edit_fertilizing.php');
-      var response = await http.post(url, body: {
-        'ferting_ID': widget.ferting_ID,
-        'ferting_amount': fertamountController.text,
-        'fert_ID': widget.fert_ID, //Dropdown
-      });
-      var data = jsonDecode(response.body);
-      // return data;
-      //Success show toast
-      if (data == "Success") {
-        Fluttertoast.showToast(
-            msg: "แก้ไขข้อมูลสำเร็จ",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.BOTTOM,
-            timeInSecForIosWeb: 1);
-        // Navigator.pop(context);
-      } else {
-        Fluttertoast.showToast(
-          msg: "แก้ไขข้อมูลไม่สำเร็จ",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-        );
-      }
-    } catch (e) {
-      print(e);
-    }
-  }
+    var jsonData = json.decode(response.body);
 
-
-  //Delete Fert
-  Future RemoveFert(String ferting_ID) async {
-    try {
-      var url = "https://meloned.relaxlikes.com/api/dailycare/delete_fertilizing.php";
-      var response = await http.post(Uri.parse(url), body: {
-        'ferting_ID': ferting_ID,
-      });
-
-      var jsonData = json.decode(response.body);
-
-      if (jsonData == "Failed No Data") {
-        Fluttertoast.showToast(
-          msg: "ลบข้อมูลไม่สำเร็จ",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.white,
-          textColor: Colors.black,
-          fontSize: 16.0,
-        );
-      } else {
-        Fluttertoast.showToast(
-          msg: "ลบข้อมูลสำเร็จ",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.white,
-          textColor: Colors.black,
-          fontSize: 16.0,
-        );
-      }
-    } catch (e) {
-      print(e);
+    if (jsonData == "Failed") {
+      Fluttertoast.showToast(
+        msg: "เพิ่มข้อมูลไม่สำเร็จ",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black,
+        fontSize: 16.0,
+      );
+    } else {
+      Fluttertoast.showToast(
+        msg: "เพิ่มข้อมูลสำเร็จ",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black,
+        fontSize: 16.0,
+      );
+      // Navigator.pop(context);
+      // setState(() {});
+      //Addwater and refresh list view data after add water success or fail
+      // setState(() {
+      //   watering.clear();
+      //   detailWater(period_ID);
+      // });
     }
   }
 
   @override
   void initState() {
     super.initState();
-
-    fertnameController.value = TextEditingValue(
-      text: widget.fert_name,
-    );
-    fertamountController.text = widget.ferting_amount;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('แก้ไขการให้ปุ๋ย'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              RemoveFert(widget.ferting_ID);
-              setState(() {
-                Navigator.pop(context, true);
-                
-              });
-            },
-            icon: Icon(Icons.delete),
-          ),
-        ],
+        title: Text('เพิ่มการให้น้ำ'),
       ),
       drawer: Hamburger(),
       body: BGContainer(
@@ -142,19 +88,12 @@ class _EditFertState extends State<EditFert> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ชื่อปุ๋ย',
-                style: TextCustom.textboxlabel(),
-              ),
-              sizedBox.Boxh5(),
-              DropDownList2(),
-              sizedBox.Boxh10(),
-              Text(
                 'ปริมาณ',
                 style: TextCustom.textboxlabel(),
               ),
               sizedBox.Boxh5(),
               FormList(
-                controller: fertamountController,
+                controller: wateramountController,
                 hintText: 'ปริมาณ',
                 hideText: false,
               ),
@@ -166,7 +105,7 @@ class _EditFertState extends State<EditFert> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          editFert();
+                          addWater(widget.periodID);
                           Navigator.pop(context);
                         });
                         //Alertbox Confirm
@@ -182,7 +121,7 @@ class _EditFertState extends State<EditFert> {
                         //         TextButton(
                         //           onPressed: () {
                         //             setState(() {
-                        //               editFert();
+                        //               AddWater();
                         //               Navigator.pop(context);
                         //               Navigator.pop(context);
                         //             });
@@ -202,7 +141,7 @@ class _EditFertState extends State<EditFert> {
                         //   },
                         // );
                       },
-                      child: Text('ยืนยัน', style: TextCustom.buttontext()),
+                      child: Text('บันทึก', style: TextCustom.buttontext()),
                       style: ElevatedButton.styleFrom(
                         primary: ColorCustom.mediumgreencolor(),
                         shape: RoundedRectangleBorder(

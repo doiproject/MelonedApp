@@ -1,37 +1,73 @@
 import 'dart:convert';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:newmelonedv2/period.dart';
+import 'package:newmelonedv2/reuse/container.dart';
+import 'package:newmelonedv2/reuse/hamburger.dart';
+import 'package:newmelonedv2/style/textstyle.dart';
+import '../menu.dart';
+import '../period.dart';
+import '../daily.dart';
+import '../analyze.dart';
 import '../reuse/bottombar.dart';
-import '../reuse/hamburger.dart';
+import '../style/colortheme.dart';
+import '../summary.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart ' as http;
+import 'package:http/http.dart' as http;
 import 'package:fluttertoast/fluttertoast.dart';
 
-class EditPeriod extends StatefulWidget {
+class EditPeriodSetting extends StatefulWidget {
   final List list;
   final int index;
 
-  const EditPeriod({Key? key, required this.index, required this.list})
+  EditPeriodSetting({Key? key, required this.list, required this.index})
       : super(key: key);
 
   @override
-  State<EditPeriod> createState() => _EditPeriodState();
+  State<EditPeriodSetting> createState() => _NewPeriodState();
 }
 
-class _EditPeriodState extends State<EditPeriod> {
-  //Variables
-  var greenhouseidController = new TextEditingController();
-  var periodidController = new TextEditingController();
-  var createdateController = new TextEditingController();
-  var harvestdateController = new TextEditingController();
+class _NewPeriodState extends State<EditPeriodSetting> {
+  //Variable
 
-  bool editMode = false;
+  //Controller
+  final periodnameController = TextEditingController();
+  final plantedmelonController = TextEditingController();
 
-  //Get Data
-  Future getPeriod() async {
-    var url = "https://meloned.relaxlikes.com/api/period/viewperiod.php";
-    var response = await http.get(Uri.parse(url));
-    return json.decode(response.body);
+  //GET REGISTERED GREENHOUSE
+  Future EditSettingPeriodAPI() async {
+    var url = "https://meloned.relaxlikes.com/api/period/edit_period.php";
+
+    var response = await http.post(Uri.parse(url), body: {
+      "period_ID": widget.list[widget.index]['period_ID'],
+      'planted_melon': plantedmelonController.text,
+      'period_name': periodnameController.text,
+    });
+
+    var jsonData = json.decode(response.body);
+    print(jsonData);
+
+    if (jsonData == "Failed") {
+      Fluttertoast.showToast(
+        msg: "แก้ไขข้อมูลไม่สำเร็จ",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black,
+        fontSize: 16.0,
+      );
+    } else {
+      Fluttertoast.showToast(
+        msg: "แก้ไขข้อมูลสำเร็จ",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black,
+        fontSize: 16.0,
+      );
+      Navigator.pop(context);
+    }
   }
 
   //Delete Period
@@ -77,39 +113,11 @@ class _EditPeriodState extends State<EditPeriod> {
     }
   }
 
-  //Finish
-  Future FinishPeriod() async {
-    var url = "https://meloned.relaxlikes.com/api/period/finish_period.php";
-    var response = await http.post(Uri.parse(url), body: {
-      'period_ID': widget.list[widget.index]['period_ID'],
-    });
-    return json.decode(response.body);
-  }
-
-  void SubmitPeriod() async {
-    //create asyn function
-    await FinishPeriod();
-    Navigator.pop(context);
-    print('SubmitPeriod Function Success');
-    //Refresh 
-    setState(() {
-      //refresh previous page
-      Period();
-
-    });
-    
-  }
-
   @override
   void initState() {
     super.initState();
-    if (widget.index != null) {
-      editMode = true;
-      greenhouseidController.text = widget.list[widget.index]['greenhouse_ID'];
-      periodidController.text = widget.list[widget.index]['period_ID'];
-      createdateController.text = widget.list[widget.index]['create_date'];
-      harvestdateController.text = widget.list[widget.index]['harvest_date'];
-    }
+    periodnameController.text = widget.list[widget.index]['period_name'];
+    plantedmelonController.text = widget.list[widget.index]['planted_melon'];
   }
 
   @override
@@ -118,15 +126,8 @@ class _EditPeriodState extends State<EditPeriod> {
     return Scaffold(
       /*______Top Bar________*/
       appBar: AppBar(
-        toolbarHeight: 70,
-        backgroundColor: Color.fromRGBO(159, 159, 54, 1),
-        elevation: 0,
         title: Text(
-          'รายละเอียดการปลูก',
-          style: TextStyle(
-            fontFamily: 'Kanit',
-            fontSize: 20,
-          ),
+          'แก้ไขรอบการปลูก',
         ),
         actions: <Widget>[
           IconButton(
@@ -136,192 +137,95 @@ class _EditPeriodState extends State<EditPeriod> {
                 deletePeriod(widget.list[widget.index]['period_ID']);
               });
             },
-            icon: Icon(
-              Icons.delete_outline,
-              size: 30,
-            ),
+            icon: Icon(Icons.delete),
           ),
         ],
       ),
+      
+      /*______Hamburger Button______*/
       drawer: Hamburger(),
-      body: Container(
-        color: Color.fromRGBO(159, 159, 54, 1),
-        child: Container(
-          // width: screen_width,
-          margin: EdgeInsets.only(left: 10, right: 10),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.all(Radius.circular(15))),
-          child: Container(
-            margin: EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+
+      body: BGContainer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ชื่อรอบการปลูก',
+              style: GoogleFonts.kanit(
+                  fontSize: 18, color: Color.fromRGBO(116, 116, 39, 1)),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            TextField(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.only(left: 20, right: 20),
+              ),
+              controller: periodnameController,
+              style: TextCustom.normal_mdg16(),
+            ),
+            SizedBox(
+              height: 12,
+            ),
+            Text(
+              'จำนวนเมลอน',
+              style: TextCustom.normal_dg18(),
+            ),
+            TextField(
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.only(left: 20, right: 20),
+              ),
+              controller: plantedmelonController,
+              style: TextCustom.normal_mdg16(),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Container(
-                  padding: EdgeInsets.all(10),
-                  width: double.infinity,
-                  margin: EdgeInsets.only(bottom: 10),
-                  child: Column(
-                    children: [
-                      //GreenhouseID Row
-                      Row(
-                        children: [
-                          Text(
-                            'หมายเลขโรงเรือน',
-                            style: TextStyle(
-                              fontFamily: 'Kanit',
-                              fontSize: 18,
-                              color: Color.fromRGBO(172, 112, 79, 1),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          // TExt show data from sql when select period
-                          Expanded(
-                            child: TextField(
-                              controller: greenhouseidController,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintStyle: TextStyle(
-                                  fontFamily: 'Kanit',
-                                  fontSize: 18,
-                                  color: Color.fromRGBO(172, 112, 79, 1),
-                                ),
-                              ),
-                              enabled: false,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Start Date Row
-                      Row(
-                        children: [
-                          Text(
-                            'วันที่สร้างรอบการปลูก',
-                            style: TextStyle(
-                              fontFamily: 'Kanit',
-                              fontSize: 18,
-                              color: Color.fromRGBO(172, 112, 79, 1),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: createdateController,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintStyle: TextStyle(
-                                  fontFamily: 'Kanit',
-                                  fontSize: 18,
-                                  color: Color.fromRGBO(172, 112, 79, 1),
-                                ),
-                              ),
-                              enabled: false,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      //Harvest Date Row
-                      Row(
-                        children: [
-                          Text(
-                            'วันที่คาดว่าจะเก็บเกี่ยว',
-                            style: TextStyle(
-                              fontFamily: 'Kanit',
-                              fontSize: 18,
-                              color: Color.fromRGBO(172, 112, 79, 1),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: harvestdateController,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintStyle: TextStyle(
-                                  fontFamily: 'Kanit',
-                                  fontSize: 18,
-                                  color: Color.fromRGBO(172, 112, 79, 1),
-                                ),
-                              ),
-                              enabled: false,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // left day row
-                      Row(
-                        children: [
-                          Text(
-                            'อายุเมลอน',
-                            style: TextStyle(
-                              fontFamily: 'Kanit',
-                              fontSize: 18,
-                              color: Color.fromRGBO(172, 112, 79, 1),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          Expanded(
-                            child: TextField(
-                              controller: periodidController,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintStyle: TextStyle(
-                                  fontFamily: 'Kanit',
-                                  fontSize: 18,
-                                  color: Color.fromRGBO(172, 112, 79, 1),
-                                ),
-                              ),
-                              enabled: false,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  height: MediaQuery.of(context).size.height * 0.3,
-                  color: Color.fromRGBO(253, 212, 176, 1),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            // FinishPeriod();
-                            SubmitPeriod();
-                          });
-                        },
-                        child: Text(
-                          'เสร็จสิ้นรอบการปลูก',
-                          style: GoogleFonts.kanit(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Color.fromRGBO(159, 159, 54, 1),
-                        ),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      EditSettingPeriodAPI();
+                      setState(() {
+                        Navigator.pop(context, true);
+                      });
+                    },
+                    child: Text('บันทึก', style: TextCustom.buttontext()),
+                    style: ElevatedButton.styleFrom(
+                      primary: ColorCustom.mediumgreencolor(),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                  ],
+                  ),
+                ),
+                SizedBox(
+                  width: 15,
+                ),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      //back and refresh previous page
+                      Navigator.pop(context, true);
+                      setState(() {});
+                    },
+                    child: Text(
+                      'ยกเลิก',
+                      style: TextCustom.buttontext(),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.red[300],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
       bottomNavigationBar: BottomBar(),

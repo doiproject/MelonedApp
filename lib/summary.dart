@@ -8,6 +8,7 @@ import 'package:newmelonedv2/style/colortheme.dart';
 import 'reuse/bottombar.dart';
 import 'style/textstyle.dart';
 
+
 class Summary extends StatefulWidget {
   Summary({Key? key}) : super(key: key);
 
@@ -19,7 +20,6 @@ class _SummaryState extends State<Summary> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*______Top Bar________*/
       appBar: AppBar(
         title: Text(
           'รายงานสรุป',
@@ -152,8 +152,7 @@ class ElevatedSummary extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-
-        //minimumSize: Size(MediaQuery.of(context).size.width * 0.7, MediaQuery.of(context).size.height * 0.11125),
+        minimumSize: Size(MediaQuery.of(context).size.width * 0.7, MediaQuery.of(context).size.height * 0.11125),
       ),
     );
   }

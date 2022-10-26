@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_session_manager/flutter_session_manager.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:lottie/lottie.dart';
 import '../style/colortheme.dart';
 import '../style/textstyle.dart';
 import 'sub_note/editnote.dart';
@@ -14,6 +15,10 @@ class Note extends StatefulWidget {
 }
 
 class _NoteState extends State<Note> {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+
+  //Session
   dynamic period_ID;
 
   @override
@@ -22,9 +27,6 @@ class _NoteState extends State<Note> {
     super.initState();
     getSession();
   }
-
-  
-
 
   getSession() async {
     dynamic id = await SessionManager().get("period_ID");
@@ -59,69 +61,98 @@ class _NoteState extends State<Note> {
     }
   }
 
+  Future<void> _refresh() async {
+    final fetchnotebookdata = await detailNote(period_ID);
+    setState(() {
+      notebook.clear();
+      notebook = fetchnotebookdata;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            IconButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/addnote');
-                },
-                icon: Icon(
-                  Icons.add_circle,
-                  color: ColorCustom.lightgreencolor(),
-                )),
-          ],
-        ),
-        FutureBuilder(
-          future: detailNote(period_ID),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.data == null) {
-              return Container(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    LoadingAnimationWidget.waveDots(
-                      size: 50,
-                      color: ColorCustom.orangecolor(),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Center(
-                      child: Text(
-                        'กำลังโหลดข้อมูล...',
-                        style: TextCustom.normal_mdg20(),
+    return SingleChildScrollView(
+      physics: ScrollPhysics(),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/addnote');
+                  },
+                  icon: Icon(
+                    Icons.add_circle,
+                    color: ColorCustom.lightgreencolor(),
+                  )),
+            ],
+          ),
+          FutureBuilder(
+            future: detailNote(period_ID),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.data == null) {
+                return Container(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      LoadingAnimationWidget.waveDots(
+                        size: 50,
+                        color: ColorCustom.orangecolor(),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              return Expanded(
-                child: notebook.isNotEmpty
-                    ? ListView.builder(
-                        itemCount: notebook.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return NoteCard(notebook: notebook[index]);
-                        },
-                      )
-                    : Container(
-                        child: Center(
-                          child: Text(
-                            'ไม่มีข้อมูลการจดบันทึก',
-                            style: TextCustom.normal_mdg20(),
-                          ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Center(
+                        child: Text(
+                          'กำลังโหลดข้อมูล...',
+                          style: TextCustom.normal_mdg20(),
                         ),
                       ),
-              );
-            }
-          },
-        )
-      ],
+                    ],
+                  ),
+                );
+              } else {
+                return Container(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: notebook.isNotEmpty
+                            ? RefreshIndicator(
+                                key: _refreshIndicatorKey,
+                                onRefresh: _refresh,
+                                child: ListView.builder(
+                                  itemCount: notebook.length,
+                                  itemBuilder: (BuildContext context, int index) {
+                                    return NoteCard(notebook: notebook[index]);
+                                  },
+                                ),
+                              )
+                            : Container(
+                                child: Column(
+                                  children: [
+                                    Lottie.asset(
+                                      'assets/animate/empty.json',
+                                      width: 250,
+                                      height: 250,
+                                    ),
+                                    Text(
+                                      'ไม่มีข้อมูลการจดบันทึก',
+                                      style: TextCustom.normal_mdg20(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+          )
+        ],
+      ),
     );
   }
 }
@@ -145,12 +176,10 @@ class NoteCard extends StatefulWidget {
 }
 
 class _NoteCardState extends State<NoteCard> {
-
   //create session noteid
   createSession() async {
     await SessionManager().set("note_ID", widget.notebook.noteid);
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +211,6 @@ class _NoteCardState extends State<NoteCard> {
                 ),
               );
               createSession();
-              
             },
             child: Row(
               children: [

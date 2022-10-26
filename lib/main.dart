@@ -2,6 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:newmelonedv2/dailymenu.dart';
 import 'package:newmelonedv2/sub_daily/fert.dart';
+import 'package:newmelonedv2/sub_daily/sub_water/addwater.dart';
+import 'package:newmelonedv2/sub_summary/showreport/showdaily.dart';
+import 'package:newmelonedv2/sub_summary/showreport/showmonthly.dart';
+import 'package:newmelonedv2/sub_summary/showreport/showperiod.dart';
+import 'package:newmelonedv2/sub_summary/showreport/showweekly.dart';
+import 'package:newmelonedv2/sub_summary/showreport/showyearly.dart';
 import 'package:newmelonedv2/sub_summary/sum_weekly.dart';
 import 'package:newmelonedv2/sub_daily/note.dart';
 import 'login.dart';
@@ -18,9 +24,10 @@ import 'sub_analyze/editanalyze.dart';
 import 'sub_daily/humid.dart';
 import 'sub_daily/sub_fert/addfert.dart';
 import 'sub_daily/sub_fert/editfert.dart';
+import 'sub_daily/sub_humid/addhumid.dart';
 import 'sub_daily/sub_note/addnote.dart';
 import 'sub_daily/sub_note/editnote.dart';
-import 'sub_period/edit_period.dart';
+import 'sub_period/detail_period.dart';
 import 'sub_period/historyperiod.dart';
 import 'sub_period/new_period.dart';
 import 'sub_summary/sum_daily.dart';
@@ -30,6 +37,9 @@ import 'sub_summary/sum_yearly.dart';
 import 'summary.dart';
 import 'style/theme.dart';
 import 'sub_daily/sub_fert/fertdropdown.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
+import 'package:month_year_picker/month_year_picker.dart';
 
 void main() {
   runApp(MyApp());
@@ -48,6 +58,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       initialRoute: '/splashscreen',
+      home: MainMenu(),
       routes: {
         'mainmenu': (context) => MainMenu(),
         '/login': (context) => Login(),
@@ -55,34 +66,45 @@ class _MyAppState extends State<MyApp> {
         '/splashscreen': (context) => SplashScreen(),
         '/menu': (context) => MainMenu(),
         '/daily': (context) => Daily(),
+        '/period': (context) => Period(),
         '/analyze': (context) => Analyze(),
         '/summary': (context) => Summary(),
-        '/period': (context) => Period(),
+        // '/addwater': (context) => AddWater(),
         '/newperiod': (context) => NewPeriod(),
         '/historyperiod': (context) => HistoryPeriod(),
         '/addfert': (context) => AddFert(),
         // '/editfert': (context) => EditFert(),*
         '/addnote': (context) => AddNote(),
         // '/editnote': (context) => EditNote(),*
-        '/humid':(context) => Humid(),
-        '/analyzedetail':(context) => AnalyzeDetail(),
-        '/addanalyze':(context) => AddAnalyze(),
-        '/afteranalyze':(context) => AfterAnalyze(),
-        '/editanalyze':(context) => EditAnalyze(),
-        '/dailysummaryform':(context) => SummaryDaily(),
-        '/weeklysummaryform':(context) => SummaryWeekly(),
-        '/monthlysummaryform':(context) => SummaryMonthly(),
-        '/yearlysummaryform':(context) => SummaryYearly(),
-        '/periodsummaryform':(context) => SummaryPeriod(),
-
+        '/humid': (context) => Humid(),
+        // '/addhumid': (context) => AddHumid(),
+        '/analyzedetail': (context) => AnalyzeDetail(),
+        '/addanalyze': (context) => AddAnalyze(),
+        '/afteranalyze': (context) => AfterAnalyze(),
+        '/editanalyze': (context) => EditAnalyze(),
+        '/dailysummaryform': (context) => SummaryDaily(),
+        '/weeklysummaryform': (context) => SummaryWeekly(),
+        '/monthlysummaryform': (context) => SummaryMonthly(),
+        '/yearlysummaryform': (context) => SummaryYearly(),
+        '/periodsummaryform': (context) => SummaryPeriod(),
+        '/dailysummary': (context) => ShowDaily(),
+        '/weeklysummary': (context) => ShowWeekly(),
+        '/monthlysummary': (context) => ShowMonthly(),
+        '/yearlysummary': (context) => ShowYearly(),
+        '/periodsummary': (context) => ShowPeriod(),
 
         //* This is the page that will be edited and send data to the database
       },
       theme: MyTheme(),
-      home: MainMenu(),
+
+      localizationsDelegates: [
+        GlobalWidgetsLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        MonthYearPickerLocalizations.delegate,
+      ],
 
       //Debug Mode Route and Comment the initialRoute
-      // home: Daily(),
+      // home: SummaryYearly(),
     );
   }
 }

@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
+import 'package:newmelonedv2/sub_period/edit_period.dart';
 import 'reuse/container.dart';
 import 'style/textstyle.dart';
 import 'reuse/bottombar.dart';
 import 'reuse/hamburger.dart';
 import 'style/colortheme.dart';
-import 'sub_period/edit_period.dart';
+import 'sub_period/detail_period.dart';
 import 'package:http/http.dart' as http;
 import 'sub_period/historyperiod.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -19,12 +21,11 @@ class Period extends StatefulWidget {
 }
 
 class _PeriodState extends State<Period> {
-
   @override
   void initState() {
     super.initState();
     getPeriod();
-   refresh();
+    refresh();
   }
 
   Future detailpreiod(String period_ID, String create_date, String harvest_date,
@@ -52,11 +53,19 @@ class _PeriodState extends State<Period> {
     return json.decode(response.body);
   }
 
-  Future refresh() async {
+  Future refreshPeriod() async {
+    var url = "https://meloned.relaxlikes.com/api/period/viewperiod.php";
+    var response = await http.get(Uri.parse(url), headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    });
+    return json.decode(response.body);
+  }
 
+  Future refresh() async {
     await Future.delayed(Duration(seconds: 3));
     setState(() {
-      getPeriod();
+      refreshPeriod();
     });
   }
 
@@ -65,8 +74,7 @@ class _PeriodState extends State<Period> {
     return Scaffold(
       appBar: AppBar(
         title: Text('รอบการปลูก'),
-        actions:
-        [
+        actions: [
           IconButton(
             onPressed: () {
               Navigator.pushNamed(context, '/newperiod');
@@ -111,66 +119,121 @@ class _PeriodState extends State<Period> {
                           ],
                         ),
                       );
-                    } else {          
-                      return Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: refresh,
-                          child: ListView.builder(
-                            itemCount: snapshot.data.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              List list = snapshot.data;
-                              return Card(
-                                color: Color.fromRGBO(253, 212, 176, 1),
-                                clipBehavior: Clip.antiAlias,
-                                child: Column(
-                                  children: [
-                                    ListTile(
-                                      title: Text(
-                                        snapshot.data[index]['greenhouse_name'],
-                                        style: GoogleFonts.kanit(),
-                                      ),
-                                      subtitle: Text(
-                                        'วันที่ปลูก  ' +
-                                            snapshot.data[index]['create_date'],
-                                        style: GoogleFonts.kanit(),
-                                      ),
-                                      trailing: IconButton(
-                                        icon: Icon(Icons.settings),
-                                        onPressed: () {
-                                          detailpreiod(
-                                            snapshot.data[index]['period_ID'],
-                                            snapshot.data[index]['create_date'],
-                                            snapshot.data[index]['harvest_date'],
-                                            snapshot.data[index]['greenhouse_ID'],
-                                          );
-                          
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) => EditPeriod(
-                                                      list: list,
-                                                      index: index,
-                                                    )),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Text(
-                                        'คาดว่าจะเก็บเกี่ยวได้ในวันที่ ' +
-                                            snapshot.data[index]['harvest_date'],
-                                        style: GoogleFonts.kanit(
-                                            color: Colors.black.withOpacity(0.6)),
-                                      ),
-                                    ),
-                                  ],
+                    } else {
+                      return snapshot.data.length != 0
+                          ? Expanded(
+                              child: RefreshIndicator(
+                                  onRefresh: refresh,
+                                  child: ListView.builder(
+                                    itemCount: snapshot.data.length,
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      List list = snapshot.data;
+                                      return Container(
+                                        margin:
+                                            EdgeInsets.symmetric(vertical: 10),
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      EditPeriod(
+                                                        list: list,
+                                                        index: index,
+                                                      )),
+                                            );
+                                          },
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                flex: 3,
+                                                child: Column(
+                                                  children: [
+                                                    ListTile(
+                                                      title: Text(
+                                                        snapshot.data[index]
+                                                            ['greenhouse_name'],
+                                                        style: TextCustom
+                                                            .bold_b16(),
+                                                      ),
+                                                      subtitle: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            'วันที่ปลูก  ' +
+                                                                snapshot.data[
+                                                                        index][
+                                                                    'create_date'],
+                                                            style: TextCustom
+                                                                .normal_dg14(),
+                                                          ),
+                                                          Text(
+                                                            'วันที่คาดว่าจะเก็บเกี่ยว ' +
+                                                                snapshot.data[
+                                                                        index][
+                                                                    'harvest_date'],
+                                                            style: TextCustom
+                                                                .normal_dg14(),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: IconButton(
+                                                  icon: Icon(
+                                                    Icons.settings,
+                                                    size: 30,
+                                                    color: ColorCustom
+                                                        .orangecolor(),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              EditPeriodSetting(
+                                                                list: list,
+                                                                index: index,
+                                                              )),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            primary:
+                                                ColorCustom.lightyellowcolor(),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            padding: EdgeInsets.all(10),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )),
+                            )
+                          : Column(
+                              children: [
+                                Lottie.asset(
+                                  'assets/animate/empty.json',
+                                  width: 250,
+                                  height: 250,
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                      );
+                                Text(
+                                  'ไม่มีรอบการปลูก',
+                                  style: TextCustom.normal_mdg20(),
+                                ),
+                              ],
+                            );
                     }
                   }),
             )
@@ -189,31 +252,36 @@ class HistoryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/historyperiod');
-        },
-        child: SizedBox(
-          height: 20,
-          child: Row(
-            children: [
-              Text(
-                'View History',
-                style:
-                    GoogleFonts.kanit(color: ColorCustom.orangecolor()),
-              ),
-              SizedBox(
-                width: 5,
-              ),
-              Icon(
-                Icons.history,
-                color: ColorCustom.orangecolor(),
-              ),
-            ],
-          ),
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.pushNamed(context, '/historyperiod');
+      },
+      child: SizedBox(
+        height: 20,
+        child: Row(
+          children: [
+            Text(
+              'ประวัติรอบการปลูก',
+              style: GoogleFonts.kanit(color: ColorCustom.orangecolor()),
+            ),
+            SizedBox(
+              width: 5,
+            ),
+            Icon(
+              Icons.history,
+              color: ColorCustom.orangecolor(),
+            ),
+          ],
         ),
-        style: TextButton.styleFrom(
-          backgroundColor: Color.fromRGBO(251, 249, 218, 1),
-        ));
+      ),
+      style: ElevatedButton.styleFrom(
+        //backgroundColor: Color.fromRGBO(251, 249, 218, 1),
+        primary: ColorCustom.lightyellowcolor(),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
   }
 }

@@ -1,17 +1,21 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_session_manager/flutter_session_manager.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:newmelonedv2/reuse/container.dart';
 import 'package:newmelonedv2/reuse/hamburger.dart';
+import 'package:intl/intl.dart';
 import 'package:newmelonedv2/reuse/sizedbox.dart';
+import 'package:newmelonedv2/style/textstyle.dart';
+import 'package:newmelonedv2/sub_summary/showreport/showweekly.dart';
 
 import '../reuse/bottombar.dart';
 import '../style/colortheme.dart';
-import '../style/textstyle.dart';
 
 class SummaryWeekly extends StatefulWidget {
   final _formKey = GlobalKey<FormState>();
+
   // const SummaryWeekly({Key? key}) : super(key: key);
 
   @override
@@ -22,9 +26,23 @@ class _SummaryWeeklyState extends State<SummaryWeekly> {
   //Variable
   List greenhouse = [];
   String? selectedValue;
+  var dateChangeFormat;
+
+  //Function
+  createSession() async {
+    await SessionManager().set('greenhouseid', selectedValue);
+    await SessionManager().set("seletedate", dateChangeFormat);
+  }
+
+  resetSession() async {
+    await SessionManager().destroy();
+  }
+
+  //Controller
+  TextEditingController dateController = TextEditingController();
 
   //GET DATA FROM API
-  //GET GREENHOUSE IN SUMMARY WEEKLY PAGE
+  //GET GREENHOUSE IN SUMMARY Weekly PAGE
   Future getGreenHouse() async {
     var url = "https://meloned.relaxlikes.com/api/summary/viewgreenhouse.php";
     var response = await http.get(Uri.parse(url));
@@ -40,23 +58,8 @@ class _SummaryWeeklyState extends State<SummaryWeekly> {
   void initState() {
     super.initState();
     getGreenHouse();
-  }
-
-  DateTimeRange? _selectDateTime;
-  void _show() async {
-    final DateTimeRange? result = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2021, 1, 1),
-      lastDate: DateTime(2030, 12, 31),
-      currentDate: DateTime.now(),
-      saveText: 'ตกลง',
-    );
-    if (result != null) {
-      print(result.start.toString());
-      setState(() {
-        _selectDateTime = result;
-      });
-    }
+    resetSession();
+    dateController.text = /*'วันที่ 1 มกราคม 2564'*/ "";
   }
 
   @override
@@ -110,7 +113,7 @@ class _SummaryWeeklyState extends State<SummaryWeekly> {
               }).toList(),
               validator: (value) {
                 if (value == null) {
-                  return 'กรุณาเลือกโรงเรือน';
+                  return 'เลือกโรงเรือน';
                 }
               },
               onChanged: (value) {
@@ -120,74 +123,67 @@ class _SummaryWeeklyState extends State<SummaryWeekly> {
                 });
               },
             ),
-            sizedBox.Boxh5(),
-            _selectDateTime == null
-                ? Center(
-                    child: Text(
-                      'กรุณาเลือกวันที่',
-                      style: TextCustom.textboxlabel(),
-                    ),
-                  )
-                : Container(
-                    padding: EdgeInsets.all(30),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                            'วันที่เริ่มต้น: ${_selectDateTime?.start.toString().split(' ')[0]}',
-                            style: TextCustom.textboxlabel()),
-                      ],
-                    )),
-            ElevatedButton(onPressed: _show, child: Icon(Icons.calendar_month)),
             sizedBox.Boxh10(),
-            _selectDateTime == null
-                ? Column(
-                    children: [
-                      Text(
-                        'วันที่เริ่มต้น',
-                        style: TextCustom.textboxlabel(),
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.calendar_month)),
-                      ),
-                      sizedBox.Boxh5(),
-                      Text(
-                        'วันที่สิ้นสุด',
-                        style: TextCustom.textboxlabel(),
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.calendar_month)),
-                      ),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'วันที่เริ่มต้น',
-                        style: TextCustom.textboxlabel(),
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.calendar_month)),
-                        onTap: _show,
-                      ),
-                      sizedBox.Boxh5(),
-                      Text(
-                        'วันที่สิ้นสุด',
-                        style: TextCustom.textboxlabel(),
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.calendar_month),
-                        ),
-                        onTap: _show,
-                      ),
-                    ],
-                  )
+            Text(
+              'วันที่ต้องการดูสรุป',
+              style: TextCustom.textboxlabel(),
+            ),
+            Text(
+              ' (แสดงข้อมูลย้อนหลัง 7 วัน นับตั้งแต่วันที่เลือก)',
+              style: TextCustom.normal_dg14(),
+            ),
+            sizedBox.Boxh5(),
+            TextField(
+              controller: dateController,
+              decoration: InputDecoration(
+                  isDense: true,
+                  prefixIcon: Icon(Icons.calendar_today),
+                  hintText: 'กรุณาใส่วันที่'),
+              style: TextCustom.normal_mdg16(),
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (pickedDate != null) {
+                  String formattedDate =
+                      DateFormat('dd-MM-yyyy').format(pickedDate);
+                  setState(() {
+                    dateController.text = formattedDate.toString();
+                  });
+                } else {
+                  print('Not Selected');
+                }
+              },
+            ),
+            sizedBox.Boxh10(),
+            ElevatedButton(
+              onPressed: () {
+                //change date format
+                var date = dateController.text;
+                var dateSplit = date.split('-');
+                dateChangeFormat =
+                    dateSplit[2] + '-' + dateSplit[1] + '-' + dateSplit[0];
+
+                //action
+                createSession();
+                Navigator.pushNamed(context, '/weeklysummary');
+              },
+              child: Text('ดูรายงาน', style: TextCustom.buttontext2()),
+              style: ElevatedButton.styleFrom(
+                elevation: 2,
+                primary: ColorCustom.yellowcolor(),
+                onPrimary: ColorCustom.lightyellowcolor(),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                minimumSize: Size(double.infinity, 20),
+                padding: EdgeInsets.all(10),
+              ),
+            ),
           ],
         ),
       ),

@@ -13,38 +13,32 @@ import '../../style/colortheme.dart';
 import '../../style/textstyle.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 
-class EditFert extends StatefulWidget {
-  final String ferting_ID;
-  final String fert_name;
-  final String ferting_amount;
-  final String fert_ID;
+class EditWater extends StatefulWidget {
+  final String waterid;
+  final String wateramount;
 
-  const EditFert({
+  const EditWater({
     Key? key,
-    required this.ferting_ID,
-    required this.fert_name,
-    required this.ferting_amount,
-    required this.fert_ID,
+    required this.waterid,
+    required this.wateramount,
   }) : super(key: key);
 
   @override
-  State<EditFert> createState() => _EditFertState();
+  State<EditWater> createState() => _EditWaterState();
 }
 
-class _EditFertState extends State<EditFert> {
-  bool editMode = false;
+class _EditWaterState extends State<EditWater> {
 
-  final fertnameController = TextEditingController();
-  final fertamountController = TextEditingController();
+  //variable
+  final wateramountController = TextEditingController();
 
-  Future editFert() async {
+  Future EditWater() async {
     try {
       var url = Uri.parse(
-          'https://meloned.relaxlikes.com/api/dailycare/edit_fertilizing.php');
+          'https://meloned.relaxlikes.com/api/dailycare/edit_watering.php');
       var response = await http.post(url, body: {
-        'ferting_ID': widget.ferting_ID,
-        'ferting_amount': fertamountController.text,
-        'fert_ID': widget.fert_ID, //Dropdown
+        'water_ID': widget.waterid,
+        'ml': wateramountController.text,
       });
       var data = jsonDecode(response.body);
       // return data;
@@ -69,18 +63,18 @@ class _EditFertState extends State<EditFert> {
     }
   }
 
-
-  //Delete Fert
-  Future RemoveFert(String ferting_ID) async {
+  //REMOVE
+  Future RemoveWater(String water_ID) async {
     try {
-      var url = "https://meloned.relaxlikes.com/api/dailycare/delete_fertilizing.php";
+      var url =
+          "https://meloned.relaxlikes.com/api/dailycare/delete_watering.php";
       var response = await http.post(Uri.parse(url), body: {
-        'ferting_ID': ferting_ID,
+        'water_ID': water_ID,
       });
 
       var jsonData = json.decode(response.body);
 
-      if (jsonData == "Failed No Data") {
+      if (jsonData == "Failed") {
         Fluttertoast.showToast(
           msg: "ลบข้อมูลไม่สำเร็จ",
           toastLength: Toast.LENGTH_SHORT,
@@ -109,22 +103,20 @@ class _EditFertState extends State<EditFert> {
   @override
   void initState() {
     super.initState();
-
-    fertnameController.value = TextEditingValue(
-      text: widget.fert_name,
-    );
-    fertamountController.text = widget.ferting_amount;
+    print(widget.waterid);
+    print(widget.wateramount);
+    wateramountController.text = widget.wateramount;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('แก้ไขการให้ปุ๋ย'),
+        title: Text('แก้ไขการให้น้ำ'),
         actions: [
           IconButton(
             onPressed: () {
-              RemoveFert(widget.ferting_ID);
+              RemoveWater(widget.waterid);
               setState(() {
                 Navigator.pop(context, true);
                 
@@ -132,6 +124,7 @@ class _EditFertState extends State<EditFert> {
             },
             icon: Icon(Icons.delete),
           ),
+
         ],
       ),
       drawer: Hamburger(),
@@ -142,19 +135,12 @@ class _EditFertState extends State<EditFert> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ชื่อปุ๋ย',
-                style: TextCustom.textboxlabel(),
-              ),
-              sizedBox.Boxh5(),
-              DropDownList2(),
-              sizedBox.Boxh10(),
-              Text(
                 'ปริมาณ',
                 style: TextCustom.textboxlabel(),
               ),
               sizedBox.Boxh5(),
               FormList(
-                controller: fertamountController,
+                controller: wateramountController,
                 hintText: 'ปริมาณ',
                 hideText: false,
               ),
@@ -166,7 +152,7 @@ class _EditFertState extends State<EditFert> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          editFert();
+                          EditWater();
                           Navigator.pop(context);
                         });
                         //Alertbox Confirm
@@ -182,7 +168,7 @@ class _EditFertState extends State<EditFert> {
                         //         TextButton(
                         //           onPressed: () {
                         //             setState(() {
-                        //               editFert();
+                        //               EditWater();
                         //               Navigator.pop(context);
                         //               Navigator.pop(context);
                         //             });
@@ -202,7 +188,7 @@ class _EditFertState extends State<EditFert> {
                         //   },
                         // );
                       },
-                      child: Text('ยืนยัน', style: TextCustom.buttontext()),
+                      child: Text('บันทึก', style: TextCustom.buttontext()),
                       style: ElevatedButton.styleFrom(
                         primary: ColorCustom.mediumgreencolor(),
                         shape: RoundedRectangleBorder(

@@ -13,38 +13,32 @@ import '../../style/colortheme.dart';
 import '../../style/textstyle.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 
-class EditFert extends StatefulWidget {
-  final String ferting_ID;
-  final String fert_name;
-  final String ferting_amount;
-  final String fert_ID;
+class EditHumid extends StatefulWidget {
+  final String humidID;
+  final String humidamount;
 
-  const EditFert({
+  const EditHumid({
     Key? key,
-    required this.ferting_ID,
-    required this.fert_name,
-    required this.ferting_amount,
-    required this.fert_ID,
+    required this.humidID,
+    required this.humidamount,
   }) : super(key: key);
 
   @override
-  State<EditFert> createState() => _EditFertState();
+  State<EditHumid> createState() => _EditHumidState();
 }
 
-class _EditFertState extends State<EditFert> {
-  bool editMode = false;
+class _EditHumidState extends State<EditHumid> {
 
-  final fertnameController = TextEditingController();
-  final fertamountController = TextEditingController();
+  //variable
+  final humidamountController = TextEditingController();
 
-  Future editFert() async {
+  Future EditHumid() async {
     try {
       var url = Uri.parse(
-          'https://meloned.relaxlikes.com/api/dailycare/edit_fertilizing.php');
+          'https://meloned.relaxlikes.com/api/dailycare/edit_humid.php');
       var response = await http.post(url, body: {
-        'ferting_ID': widget.ferting_ID,
-        'ferting_amount': fertamountController.text,
-        'fert_ID': widget.fert_ID, //Dropdown
+        'humid_ID': widget.humidID,
+        'RH': humidamountController.text,
       });
       var data = jsonDecode(response.body);
       // return data;
@@ -69,13 +63,12 @@ class _EditFertState extends State<EditFert> {
     }
   }
 
-
   //Delete Fert
-  Future RemoveFert(String ferting_ID) async {
+  Future RemoveHumid(String humid_ID) async {
     try {
-      var url = "https://meloned.relaxlikes.com/api/dailycare/delete_fertilizing.php";
+      var url = "https://meloned.relaxlikes.com/api/dailycare/delete_humid.php";
       var response = await http.post(Uri.parse(url), body: {
-        'ferting_ID': ferting_ID,
+        'humid_ID': humid_ID,
       });
 
       var jsonData = json.decode(response.body);
@@ -109,29 +102,25 @@ class _EditFertState extends State<EditFert> {
   @override
   void initState() {
     super.initState();
-
-    fertnameController.value = TextEditingValue(
-      text: widget.fert_name,
-    );
-    fertamountController.text = widget.ferting_amount;
+    print(widget.humidID);
+    print(widget.humidamount);
+    humidamountController.text = widget.humidamount;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('แก้ไขการให้ปุ๋ย'),
+        title: Text('แก้ไขค่าความชื้น'),
         actions: [
           IconButton(
             onPressed: () {
-              RemoveFert(widget.ferting_ID);
-              setState(() {
-                Navigator.pop(context, true);
-                
-              });
+              RemoveHumid(widget.humidID);
+              Navigator.pop(context);
             },
             icon: Icon(Icons.delete),
           ),
+        
         ],
       ),
       drawer: Hamburger(),
@@ -142,19 +131,12 @@ class _EditFertState extends State<EditFert> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ชื่อปุ๋ย',
-                style: TextCustom.textboxlabel(),
-              ),
-              sizedBox.Boxh5(),
-              DropDownList2(),
-              sizedBox.Boxh10(),
-              Text(
                 'ปริมาณ',
                 style: TextCustom.textboxlabel(),
               ),
               sizedBox.Boxh5(),
               FormList(
-                controller: fertamountController,
+                controller: humidamountController,
                 hintText: 'ปริมาณ',
                 hideText: false,
               ),
@@ -166,43 +148,11 @@ class _EditFertState extends State<EditFert> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          editFert();
+                          EditHumid();
                           Navigator.pop(context);
                         });
-                        //Alertbox Confirm
-                        // showDialog(
-                        //   context: context,
-                        //   builder: (BuildContext context) {
-                        //     return AlertDialog(
-                        //       title: Text('แก้ไขข้อมูล',
-                        //           style: TextCustom.pureKanit()),
-                        //       content: Text('คุณต้องการแก้ไขข้อมูลใช่หรือไม่',
-                        //           style: TextCustom.pureKanit()),
-                        //       actions: [
-                        //         TextButton(
-                        //           onPressed: () {
-                        //             setState(() {
-                        //               editFert();
-                        //               Navigator.pop(context);
-                        //               Navigator.pop(context);
-                        //             });
-                        //           },
-                        //           child: Text('ตกลง',
-                        //               style: TextCustom.pureKanit()),
-                        //         ),
-                        //         TextButton(
-                        //           onPressed: () {
-                        //             Navigator.pop(context);
-                        //           },
-                        //           child: Text('ยกเลิก',
-                        //               style: TextCustom.pureKanit()),
-                        //         ),
-                        //       ],
-                        //     );
-                        //   },
-                        // );
                       },
-                      child: Text('ยืนยัน', style: TextCustom.buttontext()),
+                      child: Text('บันทึก', style: TextCustom.buttontext()),
                       style: ElevatedButton.styleFrom(
                         primary: ColorCustom.mediumgreencolor(),
                         shape: RoundedRectangleBorder(

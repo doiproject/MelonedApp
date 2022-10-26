@@ -1,8 +1,11 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_session_manager/flutter_session_manager.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:lottie/lottie.dart';
 import 'package:newmelonedv2/sub_daily/sub_fert/editfert.dart';
 import '../style/colortheme.dart';
 import '../style/textstyle.dart';
@@ -14,6 +17,9 @@ class Fert extends StatefulWidget {
 }
 
 class _FertState extends State<Fert> {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+
   //Session
   dynamic period_ID;
 
@@ -46,15 +52,24 @@ class _FertState extends State<Fert> {
             data[i]['ferting_amount'],
             data[i]['unit'],
             data[i]['ferting_time'],
-            data[i]['period_ID'],data[i]['ferting_ID']);
+            data[i]['period_ID'],
+            data[i]['ferting_ID']);
         this.ferting.add(ferting);
       }
       // ส่งข้อมูลกลับไปแสดงใน ListView
-      
+
       return ferting;
     } catch (e) {
       print(e);
     }
+  }
+
+  Future<void> _refresh() async {
+    final fetchfertdata = await detailFert(period_ID);
+    setState(() {
+      ferting.clear();
+      ferting = fetchfertdata;
+    });
   }
 
   @override
@@ -66,67 +81,88 @@ class _FertState extends State<Fert> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            IconButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/addfert');
-                },
-                icon: Icon(
-                  Icons.add_circle,
-                  color: ColorCustom.lightgreencolor(),
-                )),
-          ],
-        ),
-        FutureBuilder(
-          future: detailFert(period_ID),
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.data == null) {
-              return Container(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    LoadingAnimationWidget.waveDots(
-                      size: 50,
-                      color: ColorCustom.orangecolor(),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Center(
-                      child: Text(
-                        'กำลังโหลดข้อมูล...',
-                        style: TextCustom.normal_mdg20(),
+    return SingleChildScrollView(
+      physics: ScrollPhysics(),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/addfert');
+                  },
+                  icon: Icon(
+                    Icons.add_circle,
+                    color: ColorCustom.lightgreencolor(),
+                  )),
+            ],
+          ),
+          FutureBuilder(
+            future: detailFert(period_ID),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.data == null) {
+                return Container(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      LoadingAnimationWidget.waveDots(
+                        size: 50,
+                        color: ColorCustom.orangecolor(),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              return Expanded(
-                child: ferting.isNotEmpty
-                    ? ListView.builder(
-                        itemCount: ferting.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return FertCard(ferting: ferting[index]);
-                        },
-                      )
-                    : Container(
-                        child: Center(
-                          child: Text(
-                            'ไม่มีข้อมูลการให้ปุ๋ย',
-                            style: TextCustom.normal_mdg20(),
-                          ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Center(
+                        child: Text(
+                          'กำลังโหลดข้อมูล...',
+                          style: TextCustom.normal_mdg20(),
                         ),
                       ),
-              );
-            }
-          },
-        ),
-      ],
+                    ],
+                  ),
+                );
+              } else {
+                return Container(
+                  height: MediaQuery.of(context).size.height * 0.5,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: ferting.isNotEmpty
+                            ? RefreshIndicator(
+                                key: _refreshIndicatorKey,
+                                onRefresh: _refresh,
+                                child: ListView.builder(
+                                  itemCount: ferting.length,
+                                  itemBuilder: (BuildContext context, int index) {
+                                    return FertCard(ferting: ferting[index]);
+                                  },
+                                ),
+                              )
+                            : Container(
+                                child: Column(
+                                  children: [
+                                    Lottie.asset(
+                                      'assets/animate/empty.json',
+                                      width: 250,
+                                      height: 250,
+                                    ),
+                                    Text(
+                                      'ไม่มีข้อมูลการให้ปุ๋ย',
+                                      style: TextCustom.normal_mdg20(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -141,7 +177,7 @@ class Ferting {
   String ferting_ID;
 
   Ferting(this.fert_ID, this.fertname, this.amount, this.unit, this.time,
-      this.periodID,this.ferting_ID);
+      this.periodID, this.ferting_ID);
 }
 
 class FertCard extends StatefulWidget {
@@ -157,55 +193,58 @@ class _FertCardState extends State<FertCard> {
   Widget build(BuildContext context) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              primary: ColorCustom.lightyellowcolor(),
-              onPrimary: ColorCustom.yellowcolor(),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: EdgeInsets.all(20),
-            ),
-            onPressed: () {},
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        '${widget.ferting.fertname} ' +
-                            '(${widget.ferting.amount} ${widget.ferting.unit} ${widget.ferting.fert_ID})',
-                        style: TextCustom.normal_dg16()),
-                    Text('${widget.ferting.time}',
-                        style: TextCustom.normal_dg16()),
-                  ],
+      child: SingleChildScrollView(
+        physics: ScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                primary: ColorCustom.lightyellowcolor(),
+                onPrimary: ColorCustom.yellowcolor(),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                IconButton(
-                    onPressed: () {
-                      // Navigator.pushNamed(context, '/editfert');
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => EditFert(
-                                    fert_ID: widget.ferting.fert_ID,
-                                    ferting_amount: widget.ferting.amount,
-                                    fert_name: widget.ferting.fertname,
-                                    ferting_ID: widget.ferting.ferting_ID,
-                                  )));
-                    },
-                    icon: Icon(
-                      Icons.settings,
-                      color: ColorCustom.orangecolor(),
-                      size: 30,
-                    )),
-              ],
+                padding: EdgeInsets.all(20),
+              ),
+              onPressed: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${widget.ferting.fertname}',
+                          style: TextCustom.normal_dg16()),
+                      Text('${widget.ferting.amount} ${widget.ferting.unit}',
+                          style: TextCustom.normal_dg16()),
+                      Text('${widget.ferting.time}',
+                          style: TextCustom.normal_dg16()),
+                    ],
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        // Navigator.pushNamed(context, '/editfert');
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => EditFert(
+                                      fert_ID: widget.ferting.fert_ID,
+                                      ferting_amount: widget.ferting.amount,
+                                      fert_name: widget.ferting.fertname,
+                                      ferting_ID: widget.ferting.ferting_ID,
+                                    )));
+                      },
+                      icon: Icon(
+                        Icons.settings,
+                        color: ColorCustom.orangecolor(),
+                        size: 30,
+                      )),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
